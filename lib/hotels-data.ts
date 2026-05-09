@@ -24,6 +24,9 @@ export interface Hotel {
   state: string;
   address: string;
   phone: string;
+  email?: string;
+  gstNumber?: string;
+  placeId?: string;
   mapsLink: string;
   mapEmbed: string;
   rating: number;
