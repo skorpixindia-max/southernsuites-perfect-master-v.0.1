@@ -49,20 +49,26 @@ async function getHotelLiveData(slug: string, checkIn: string, checkOut: string)
 
 function mergeHotelData(hotel: Hotel, overrides: Record<string, unknown>, rates: Record<string, { price: number; original_price: number }>): Hotel {
   const overrideRooms = (overrides.rooms as RoomType[] | undefined) || [];
-  
-  
-  // Merge base rooms with override rooms (prices + images from admin)
+
+  // Merge base rooms with override rooms by ID
   const mergedRooms = hotel.rooms.map((baseRoom: RoomType) => {
-    const overrideRoom = overrideRooms.find((r) => r.id === baseRoom.id);
+    const overrideRoom = overrideRooms.find((r: RoomType) => r.id === baseRoom.id);
     const rateData = rates[baseRoom.id];
     return {
       ...baseRoom,
       ...(overrideRoom || {}),
+      id: baseRoom.id, // always keep original ID
       images: overrideRoom?.images?.length ? overrideRoom.images : baseRoom.images,
       price: rateData ? rateData.price : (overrideRoom?.price ?? baseRoom.price),
       originalPrice: rateData ? rateData.original_price : (overrideRoom?.originalPrice ?? baseRoom.originalPrice),
     };
   });
+
+  // Also add any NEW rooms created in admin (with generated IDs)
+  const newRooms = overrideRooms.filter(
+    (r: RoomType) => !hotel.rooms.find((base) => base.id === r.id)
+  );
+
   return {
     ...hotel,
     name: (overrides.name as string) || hotel.name,
@@ -72,7 +78,7 @@ function mergeHotelData(hotel: Hotel, overrides: Record<string, unknown>, rates:
     mapsLink: (overrides.maps_link as string) || hotel.mapsLink,
     amenities: (overrides.amenities as string[]) || hotel.amenities,
     highlights: (overrides.highlights as string[]) || hotel.highlights,
-    rooms: mergedRooms,
+    rooms: [...mergedRooms, ...newRooms],
   };
 }
 
