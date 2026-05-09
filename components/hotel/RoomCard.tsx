@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { RoomType, Hotel } from '@/lib/hotels-data';
 import { formatCurrency, calculateTaxes } from '@/lib/utils';
@@ -19,7 +19,17 @@ export default function RoomCard({
   const [roomCount, setRoomCount] = useState(1);
   const taxes = calculateTaxes(room.price, room.price);
   const roomImages: string[] = (room as RoomType & { images?: string[] }).images || [];
-  const mainImage = roomImages[0] || null;
+const [currentImg, setCurrentImg] = useState(0);
+
+useEffect(() => {
+  if (roomImages.length <= 1) return;
+  const timer = setInterval(() => {
+    setCurrentImg((prev) => (prev + 1) % roomImages.length);
+  }, 3000);
+  return () => clearInterval(timer);
+}, [roomImages.length]);
+
+const mainImage = roomImages[currentImg] || null;
 
   const maxRooms = availability ? availability.available : 10;
   const isSoldOut = availability ? availability.available === 0 : false;
@@ -36,8 +46,28 @@ export default function RoomCard({
         {/* Room image */}
         <div className="h-44 md:h-auto relative overflow-hidden flex items-center justify-center bg-gradient-to-br from-brand-rich to-brand-black">
           {mainImage ? (
-            <img src={mainImage} alt={room.name} className="w-full h-full object-cover" />
-          ) : (
+  <div className="relative w-full h-full">
+    {roomImages.map((img, idx) => (
+      <img
+        key={img}
+        src={img}
+        alt={room.name}
+        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${idx === currentImg ? 'opacity-100' : 'opacity-0'}`}
+      />
+    ))}
+    {roomImages.length > 1 && (
+      <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1 z-10">
+        {roomImages.map((_, idx) => (
+          <button
+            key={idx}
+            onClick={() => setCurrentImg(idx)}
+            className={`w-1.5 h-1.5 rounded-full transition-all ${idx === currentImg ? 'bg-gold' : 'bg-white/50'}`}
+          />
+        ))}
+      </div>
+    )}
+  </div>
+) : (
             <div className="flex flex-col items-center justify-center gap-1">
               <div className="text-gold/20 font-serif text-5xl">{room.name[0]}</div>
               <div className="text-[9px] text-white/20 font-sans">No photo</div>
@@ -53,11 +83,7 @@ export default function RoomCard({
               Only {availability!.available} left!
             </div>
           )}
-          {roomImages.length > 1 && (
-            <div className="absolute bottom-2 right-2 bg-black/60 text-white text-[9px] px-2 py-0.5 font-sans">
-              +{roomImages.length - 1} photos
-            </div>
-          )}
+          
         </div>
 
         {/* Room details */}

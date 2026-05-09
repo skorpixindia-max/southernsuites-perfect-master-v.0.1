@@ -29,11 +29,15 @@ async function getLiveData(): Promise<{
 
     const names: Record<string, string> = {};
     const images: Record<string, string[]> = {};
-    settingsRes.data?.forEach((r: { hotel_slug: string; hotel_name: string; images: string[] }) => {
-      if (r.hotel_name) names[r.hotel_slug] = r.hotel_name;
-      if (r.images && r.images.length > 0) images[r.hotel_slug] = r.images;
-    });
-
+    settingsRes.data?.forEach((r: { hotel_slug: string; hotel_name: string; images: unknown }) => {
+  if (r.hotel_name) names[r.hotel_slug] = r.hotel_name;
+  let imgs: string[] = [];
+  if (Array.isArray(r.images)) imgs = r.images;
+  else if (typeof r.images === 'string') {
+    try { imgs = JSON.parse(r.images); } catch { imgs = []; }
+  }
+  if (imgs.length > 0) images[r.hotel_slug] = imgs;
+});
     return { rates, names, images };
   } catch {
     return { rates: {}, names: {}, images: {} };
