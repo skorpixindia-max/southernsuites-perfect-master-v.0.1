@@ -2,63 +2,71 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 
 export async function POST(req: NextRequest) {
-  const { hotelSlug, roomId, checkIn, checkOut } = await req.json();
-
-  if (!hotelSlug || !roomId || !checkIn || !checkOut) {
-    return NextResponse.json({ available: false, error: 'Missing required fields' }, { status: 400 });
-  }
-
   try {
-    // Get total inventory for this room
-    const { data: invData, error: invError } = await supabaseAdmin
+    const { roomId, hotelSlug, checkIn, checkOut, roomsRequested = 1 } = await req.json();
+
+    if (!roomId || !hotelSlug || !checkIn || !checkOut) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
+    // ── Step 1: Get total rooms in inventory ──────────────────
+    const { data: invData } = await supabaseAdmin
       .from('room_inventory')
       .select('total_rooms')
       .eq('room_id', roomId)
       .eq('hotel_slug', hotelSlug)
       .single();
 
-    if (invError || !invData) {
-      // No inventory record = treat as 1 room available (fallback)
-      return NextResponse.json({ available: true, totalRooms: 1, bookedRooms: 0 });
+    const totalRooms = invData?.total_rooms ?? 1;
+
+    // ── Step 2: Get all dates between checkIn and checkOut ────
+    const dates: string[] = [];
+    const cur = new Date(checkIn);
+    const end = new Date(checkOut);
+    while (cur < end) {
+      dates.push(cur.toISOString().split('T')[0]);
+      cur.setDate(cur.getDate() + 1);
     }
 
-    const totalRooms = invData.total_rooms;
+    if (dates.length === 0) {
+      return NextResponse.json({ available: false, availableRooms: 0, totalRooms });
+    }
 
-    // Get all booked dates overlapping with requested range
-    // room_availability has one row per date per booking
-    const { data: bookedData, error: bookedError } = await supabaseAdmin
+    // ── Step 3: Get max booked rooms on any single night ──────
+    // This finds the worst-case night (highest bookings)
+    const { data: bookedData } = await supabaseAdmin
       .from('room_availability')
       .select('date, rooms_booked')
       .eq('room_id', roomId)
       .eq('hotel_slug', hotelSlug)
-      .gte('date', checkIn)
-      .lt('date', checkOut);
+      .in('date', dates);
 
-    if (bookedError) throw bookedError;
-
-    // Find the max rooms booked on any single date in the range
-    // (worst case day = determines availability)
-    let maxBookedOnAnyDay = 0;
-    const dateMap: Record<string, number> = {};
-
-    (bookedData || []).forEach((row) => {
-      dateMap[row.date] = (dateMap[row.date] || 0) + (row.rooms_booked || 1);
-      if (dateMap[row.date] > maxBookedOnAnyDay) {
-        maxBookedOnAnyDay = dateMap[row.date];
-      }
+    // Sum up rooms_booked per date
+    const bookedPerDate: Record<string, number> = {};
+    bookedData?.forEach((row: { date: string; rooms_booked: number }) => {
+      bookedPerDate[row.date] = (bookedPerDate[row.date] || 0) + row.rooms_booked;
     });
 
-    const available = maxBookedOnAnyDay < totalRooms;
-    const remainingRooms = Math.max(0, totalRooms - maxBookedOnAnyDay);
+    // Find the most constrained night
+    let maxBooked = 0;
+    for (const date of dates) {
+      const booked = bookedPerDate[date] || 0;
+      if (booked > maxBooked) maxBooked = booked;
+    }
+
+    const availableRooms = Math.max(0, totalRooms - maxBooked);
+    const available = availableRooms >= roomsRequested;
 
     return NextResponse.json({
       available,
+      availableRooms,
       totalRooms,
-      bookedRooms: maxBookedOnAnyDay,
-      remainingRooms,
+      maxBooked,
     });
+
   } catch (err) {
-    console.error('Check availability error:', err);
-    return NextResponse.json({ available: true, totalRooms: 1, bookedRooms: 0 });
+    console.error('Availability check error:', err);
+    // Safe fallback — never silently show as available
+    return NextResponse.json({ available: false, availableRooms: 0, totalRooms: 0 });
   }
 }
