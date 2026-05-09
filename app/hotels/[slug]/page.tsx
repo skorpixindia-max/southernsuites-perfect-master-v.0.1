@@ -24,10 +24,20 @@ async function getHotelLiveData(slug: string, checkIn: string, checkOut: string)
 
     let overrides: Record<string, unknown> = {};
     if (settingsRes.data) {
-      let extra: Record<string, unknown> = {};
-      try { extra = JSON.parse(settingsRes.data.announcement || '{}'); } catch {}
-      overrides = { name: settingsRes.data.hotel_name, description: settingsRes.data.custom_description, images: settingsRes.data.images || [], ...extra };
-    }
+  let extra: Record<string, unknown> = {};
+
+  try {
+    extra = JSON.parse(settingsRes.data.announcement || '{}');
+  } catch {}
+
+  overrides = {
+    name: settingsRes.data.hotel_name,
+    description: settingsRes.data.custom_description,
+    images: settingsRes.data.images || [],
+    rooms: settingsRes.data.rooms || extra.rooms || [],
+    ...extra,
+  };
+}
 
     const rates: Record<string, { price: number; original_price: number }> = {};
     ratesRes.data?.forEach((r: { room_id: string; price: number; original_price: number }) => { rates[r.room_id] = r; });
@@ -109,7 +119,7 @@ export default async function HotelPage({ params, searchParams }: {
   const { overrides, rates, availability } = await getHotelLiveData(slug, checkIn, checkOut);
   const hotel = mergeHotelData(hotelBase!, overrides, rates);
   let liveImages: string[] = [];
-  const rawImages = overrides.images;
+  const rawImages = overrides.images as string[] | string | undefined;
   if (Array.isArray(rawImages)) {
   liveImages = rawImages;
    } else if (typeof rawImages === 'string') {
