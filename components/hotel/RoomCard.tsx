@@ -17,7 +17,7 @@ export default function RoomCard({
 }) {
   const router = useRouter();
   const [roomCount, setRoomCount] = useState(1);
-  const taxes = calculateTaxes(room.price);
+  const taxes = calculateTaxes(room.price, room.price);
   const roomImages: string[] = (room as RoomType & { images?: string[] }).images || [];
   const mainImage = roomImages[0] || null;
 
@@ -85,10 +85,10 @@ export default function RoomCard({
             </div>
 
             <div className="flex flex-wrap gap-1.5 mb-4">
-              {room.amenities.slice(0, 6).map((a) => (
+              {(room.amenities || []).slice(0, 6).map((a) => (
                 <span key={a} className="text-[9px] text-gold-dark border border-gold-border px-2 py-1 font-sans">{a}</span>
               ))}
-              {room.amenities.length > 6 && (
+              {(room.amenities || []).length > 6 && (
                 <span className="text-[9px] text-gray-400 font-sans py-1">+{room.amenities.length - 6} more</span>
               )}
             </div>
