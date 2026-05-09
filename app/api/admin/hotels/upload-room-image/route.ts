@@ -12,23 +12,35 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
     }
 
-    const ext = file.name.split('.').pop();
+    // ✅ Validate file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
+    if (!allowedTypes.includes(file.type)) {
+      return NextResponse.json({ error: `Invalid type: ${file.type}. Use JPG, PNG or WebP.` }, { status: 400 });
+    }
+
+    const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
     const fileName = `${hotelSlug}/rooms/${roomId}-${Date.now()}.${ext}`;
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
+    // ✅ Upload to storage
     const { error: uploadError } = await supabaseAdmin.storage
       .from('hotel-images')
-      .upload(fileName, buffer, { contentType: file.type, upsert: false });
+      .upload(fileName, buffer, { contentType: file.type, upsert: true });
 
-    if (uploadError) return NextResponse.json({ error: 'Upload failed' }, { status: 500 });
+    if (uploadError) {
+      console.error('ROOM IMAGE UPLOAD ERROR:', JSON.stringify(uploadError));
+      return NextResponse.json({ error: uploadError.message }, { status: 500 });
+    }
 
     const { data: urlData } = supabaseAdmin.storage.from('hotel-images').getPublicUrl(fileName);
+    const publicUrl = urlData.publicUrl;
+    console.log('✅ Room image uploaded:', publicUrl);
 
-    // Get current hotel settings
+    // ✅ Get current hotel settings
     const { data: existing } = await supabaseAdmin
       .from('hotel_settings')
-      .select('announcement')
+      .select('announcement, images')
       .eq('hotel_slug', hotelSlug)
       .single();
 
@@ -37,23 +49,37 @@ export async function POST(req: NextRequest) {
 
     const rooms: Record<string, unknown>[] = (extra.rooms as Record<string, unknown>[]) || [];
     const roomIdx = rooms.findIndex((r) => r.id === roomId);
-    
+
     if (roomIdx !== -1) {
       const currentImages: string[] = (rooms[roomIdx].images as string[]) || [];
-      rooms[roomIdx] = { ...rooms[roomIdx], images: [...currentImages, urlData.publicUrl] };
+      rooms[roomIdx] = { ...rooms[roomIdx], images: [...currentImages, publicUrl] };
+    } else {
+      // Room not in overrides yet — add it
+      rooms.push({ id: roomId, images: [publicUrl] });
     }
 
     extra.rooms = rooms;
 
-    await supabaseAdmin.from('hotel_settings').upsert({
-      hotel_slug: hotelSlug,
-      announcement: JSON.stringify(extra),
-      updated_at: new Date().toISOString(),
-    }, { onConflict: 'hotel_slug' });
+    // ✅ Save back
+    const { error: saveError } = await supabaseAdmin
+      .from('hotel_settings')
+      .upsert({
+        hotel_slug: hotelSlug,
+        hotel_name: hotelSlug,
+        announcement: JSON.stringify(extra),
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'hotel_slug' });
 
-    return NextResponse.json({ success: true, url: urlData.publicUrl });
+    if (saveError) {
+      console.error('ROOM IMAGE SAVE ERROR:', JSON.stringify(saveError));
+      return NextResponse.json({ error: saveError.message, url: publicUrl }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true, url: publicUrl });
+
   } catch (err) {
-    console.error(err);
-    return NextResponse.json({ error: 'Server error' }, { status: 500 });
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error('ROOM IMAGE CRASH:', msg);
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
