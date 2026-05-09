@@ -1,7 +1,7 @@
 import { Resend } from 'resend';
 import { formatCurrency, formatDate } from './utils';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = new Resend(process.env.RESEND_API_KEY ?? 'dummy_key');
 
 export async function sendBookingConfirmationEmail(booking: {
   bookingId: string;
@@ -163,6 +163,11 @@ export async function sendBookingConfirmationEmail(booking: {
 </html>`;
 
   const fromAddress = process.env.EMAIL_FROM || 'bookings@southernsuites.com';
+
+  if (!process.env.RESEND_API_KEY) {
+    console.warn('No RESEND_API_KEY — skipping email');
+    return;
+  }
 
   try {
     // Send guest confirmation

@@ -6,7 +6,7 @@ import { getHotelBySlug } from '@/lib/hotels-data';
 
 export default async function BookingPage({ params, searchParams }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ room?: string; checkIn?: string; checkOut?: string; guests?: string }>;
+  searchParams: Promise<{ room?: string; checkIn?: string; checkOut?: string; guests?: string; rooms?: string }>;
 }) {
   const { slug } = await params;
   const sp = await searchParams;
@@ -18,6 +18,7 @@ export default async function BookingPage({ params, searchParams }: {
   const checkIn = sp.checkIn || '';
   const checkOut = sp.checkOut || '';
   const guests = sp.guests || '2';
+  const rooms = sp.rooms || '1';
 
   return (
     <div className="min-h-screen bg-gold-tint">
@@ -34,7 +35,7 @@ export default async function BookingPage({ params, searchParams }: {
             </div>
           ))}
         </div>
-        <BookingForm hotel={hotel} room={room} checkIn={checkIn} checkOut={checkOut} guests={guests} />
+        <BookingForm hotel={hotel} room={room} checkIn={checkIn} checkOut={checkOut} guests={guests} rooms={rooms} />
       </div>
       <Footer />
     </div>

@@ -10,12 +10,13 @@ declare global {
   interface Window { Razorpay: new (options: object) => { open: () => void }; }
 }
 
-export default function BookingForm({ hotel, room, checkIn, checkOut, guests }: {
+export default function BookingForm({ hotel, room, checkIn, checkOut, guests, rooms = '1' }: {
   hotel: Hotel;
   room: RoomType;
   checkIn: string;
   checkOut: string;
   guests: string;
+  rooms?: string;
 }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -31,7 +32,8 @@ export default function BookingForm({ hotel, room, checkIn, checkOut, guests }: 
     guests: guests || '2',
   });
   const nights = calculateNights(new Date(form.checkIn), new Date(form.checkOut));
-  const subtotal = room.price * Math.max(nights, 0);
+  const roomCount = Math.max(1, parseInt(rooms) || 1);
+  const subtotal = room.price * Math.max(nights, 0) * roomCount;
   const taxes = calculateTaxes(subtotal);
   const total = subtotal + taxes;
 
@@ -128,6 +130,7 @@ export default function BookingForm({ hotel, room, checkIn, checkOut, guests }: 
           nights,
           guests: parseInt(form.guests),
           roomPrice: room.price,
+          roomsCount: roomCount,
           taxes,
           totalAmount: total,
           razorpayOrderId: orderId,

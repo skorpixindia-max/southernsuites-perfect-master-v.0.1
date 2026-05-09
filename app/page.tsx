@@ -136,7 +136,7 @@ export default async function HomePage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-gold-border">
           {HOTELS.map((hotel) => {
             const uploadedImages = images[hotel.slug];
-            const heroImage = uploadedImages?.[0] || null;
+            const heroImage = uploadedImages?.[0]?.startsWith('http') ? uploadedImages[0] : null;;
 
             return (
               <div key={hotel.id} className="bg-white group">
