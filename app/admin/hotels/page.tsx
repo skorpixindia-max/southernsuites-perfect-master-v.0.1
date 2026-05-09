@@ -44,15 +44,24 @@ export default function AdminHotels() {
       amenities: ov.amenities ?? hotel.amenities,
       highlights: ov.highlights ?? hotel.highlights,
       images: ov.images ?? [],
-      rooms: ov.rooms ?? hotel.rooms.map(r => ({
-        id: r.id, name: r.name, price: r.price,
-        originalPrice: r.originalPrice || r.price,
-        size: r.size, beds: r.beds, view: r.view,
-        maxGuests: r.maxGuests, amenities: r.amenities,
-        description: r.description, images: [],
-      })),
+      rooms: hotel.rooms.map(r => {
+  const ovRoom = (ov.rooms || []).find((or: {id: string}) => or.id === r.id);
+  return {
+    id: r.id,
+    name: ovRoom?.name ?? r.name,
+    price: ovRoom?.price ?? r.price,
+    originalPrice: ovRoom?.originalPrice ?? r.originalPrice ?? r.price,
+    size: ovRoom?.size ?? r.size,
+    beds: ovRoom?.beds ?? r.beds,
+    view: ovRoom?.view ?? r.view,
+    maxGuests: ovRoom?.maxGuests ?? r.maxGuests,
+    amenities: ovRoom?.amenities ?? r.amenities,
+    description: ovRoom?.description ?? r.description,
+    images: ovRoom?.images ?? r.images ?? [],
+  };
+}),
     };
-  }
+}
 
   async function saveHotel(slug: string) {
     const data = overrides[slug];
