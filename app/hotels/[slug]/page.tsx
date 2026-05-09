@@ -44,7 +44,7 @@ async function getHotelLiveData(slug: string, checkIn: string, checkOut: string)
 
     const bookedCount: Record<string, number> = {};
     (bookedRes as { data: { room_id: string; rooms_booked: number }[] | null }).data?.forEach((b) => {
-      bookedCount[b.room_id] = Math.max(bookedCount[b.room_id] || 0, b.rooms_booked || 1);
+      bookedCount[b.room_id] = (bookedCount[b.room_id] || 0) + (b.rooms_booked || 1);
     });
 
     const availability: Record<string, { total: number; booked: number; available: number }> = {};
