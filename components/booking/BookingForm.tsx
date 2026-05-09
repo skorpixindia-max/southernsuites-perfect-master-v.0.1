@@ -17,12 +17,13 @@ interface PromoResult {
   discount_value: number;
 }
 
-export default function BookingForm({ hotel, room, checkIn, checkOut, guests }: {
+export default function BookingForm({ hotel, room, checkIn, checkOut, guests, rooms = '1' }: {
   hotel: Hotel;
   room: RoomType;
   checkIn: string;
   checkOut: string;
   guests: string;
+  rooms?: string;
 }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -42,11 +43,11 @@ export default function BookingForm({ hotel, room, checkIn, checkOut, guests }: 
   });
 
   const nights = calculateNights(new Date(form.checkIn), new Date(form.checkOut));
-  const subtotal = room.price * Math.max(nights, 0);
-  const gstSlab = calculateGSTSlab(room.price);
+  const roomCount = Math.max(1, parseInt(rooms) || 1);
+  const subtotal = room.price * Math.max(nights, 0) * roomCount;
+  const gstSlab = calculateGSTSlab(subtotal / Math.max(nights, 1) / roomCount);
   const taxes = calculateTaxes(subtotal, room.price);
-  const total = Math.max(0, subtotal + taxes - discountAmount);
-
+  const total = subtotal + taxes;
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
     const { name, value } = e.target;
     if (name === 'checkIn') {
@@ -187,7 +188,7 @@ export default function BookingForm({ hotel, room, checkIn, checkOut, guests }: 
           guestName: form.name, guestEmail: form.email, guestPhone: form.phone,
           checkIn: form.checkIn, checkOut: form.checkOut,
           nights, guests: parseInt(form.guests),
-          roomPrice: room.price, taxes, totalAmount: total,
+          roomPrice: room.price, roomsCount: roomCount, taxes, totalAmount: total,
           discountAmount, promoCode: appliedPromo?.code || null,
           razorpayOrderId: orderId, razorpayPaymentId: paymentId, razorpaySignature: signature,
           specialRequests: form.special, gstNumber: hotel.gstNumber,
