@@ -69,14 +69,16 @@ export async function POST(req: NextRequest) {
 
     // Parse existing images safely
     let currentImages: string[] = [];
-    if (existing?.images) {
-      if (Array.isArray(existing.images)) {
-        currentImages = existing.images;
-      } else if (typeof existing.images === 'string') {
-        try { currentImages = JSON.parse(existing.images); } catch { currentImages = []; }
-      }
-    }
-
+if (existing?.images) {
+  if (Array.isArray(existing.images)) {
+    currentImages = existing.images;
+  } else if (typeof existing.images === 'string') {
+    try { currentImages = JSON.parse(existing.images); } catch { currentImages = []; }
+  } else if (typeof existing.images === 'object') {
+    // jsonb array comes as object from Supabase
+    currentImages = Object.values(existing.images) as string[];
+  }
+}
     const newImages = [...currentImages, publicUrl];
 
     // Step 4: Save back to DB
