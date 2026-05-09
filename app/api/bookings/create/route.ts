@@ -49,6 +49,11 @@ export async function POST(req: NextRequest) {
       razorpay_payment_id: body.razorpayPaymentId || null,
       razorpay_signature:  body.razorpaySignature || null,
       special_requests:    body.specialRequests  || null,
+      rooms_count:         (body.roomsCount as number) || 1,
+      discount_amount:     (body.discountAmount as number) || 0,
+      promo_code:          (body.promoCode as string) || null,
+      invoice_number:      invoiceNumber,
+      gst_number:          (body.gstNumber as string) || '37CATPM1818B1ZN',
     };
 
     console.log('💾 Inserting booking:', body.bookingId);
@@ -72,7 +77,7 @@ export async function POST(req: NextRequest) {
           hotel_slug:   body.hotelSlug,
           room_id:      body.roomId,
           date,
-          rooms_booked: 1,
+          rooms_booked: (body.roomsCount as number) || 1,
           booking_id:   body.bookingId,
         }));
         await supabaseAdmin.from('room_availability').insert(availRows)
