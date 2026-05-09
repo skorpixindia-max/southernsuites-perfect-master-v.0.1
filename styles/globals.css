@@ -1,0 +1,117 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --gold: #C9A84C;
+  --gold-light: #E8C96A;
+  --gold-dark: #B8963E;
+  --gold-tint: #F9F5ED;
+  --gold-border: #E8E0CC;
+  --brand-black: #0A0A0A;
+  --brand-rich: #1A1209;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  color: #1A1209;
+  background: #fff;
+  -webkit-font-smoothing: antialiased;
+}
+
+.font-serif {
+  font-family: Georgia, 'Times New Roman', serif;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #f9f5ed; }
+::-webkit-scrollbar-thumb { background: #C9A84C; border-radius: 3px; }
+
+/* Custom components */
+@layer components {
+  .btn-gold {
+    @apply bg-gold text-brand-black px-6 py-3 text-xs tracking-widest uppercase font-sans hover:bg-gold-dark transition-colors duration-200 cursor-pointer border-0;
+  }
+
+  .btn-black {
+    @apply bg-brand-black text-gold px-6 py-3 text-xs tracking-widest uppercase font-sans hover:bg-brand-rich transition-colors duration-200 cursor-pointer border-0;
+  }
+
+  .btn-outline {
+    @apply border border-gold-border text-brand-rich px-6 py-3 text-xs tracking-widest uppercase font-sans hover:border-gold hover:text-gold transition-colors duration-200 cursor-pointer bg-transparent;
+  }
+
+  .section-eyebrow {
+    @apply text-gold-dark text-xs tracking-widest uppercase font-sans mb-2;
+  }
+
+  .section-title {
+    @apply text-brand-rich font-serif text-2xl font-normal;
+  }
+
+  .gold-rule {
+    @apply flex items-center gap-3;
+  }
+
+  .gold-rule::before,
+  .gold-rule::after {
+    content: '';
+    @apply h-px bg-gold-border flex-1;
+  }
+
+  .input-field {
+    @apply w-full border border-gold-border bg-white px-4 py-3 text-sm text-brand-rich focus:outline-none focus:border-gold transition-colors;
+  }
+
+  .card-hotel {
+    @apply bg-white border border-gold-border hover:border-gold transition-colors duration-200;
+  }
+}
+
+/* Date picker overrides */
+.react-datepicker-wrapper {
+  width: 100%;
+}
+.react-datepicker__input-container input {
+  width: 100%;
+  border: 1px solid #E8E0CC;
+  padding: 12px 16px;
+  font-size: 14px;
+  color: #1A1209;
+  background: white;
+  outline: none;
+  cursor: pointer;
+}
+.react-datepicker__input-container input:focus {
+  border-color: #C9A84C;
+}
+.react-datepicker {
+  font-family: Arial, sans-serif;
+  border: 1px solid #E8E0CC;
+  border-radius: 0;
+}
+.react-datepicker__header {
+  background: #0a0a0a;
+  border-bottom: 1px solid #222;
+}
+.react-datepicker__current-month,
+.react-datepicker__day-name {
+  color: #C9A84C;
+}
+.react-datepicker__day--selected,
+.react-datepicker__day--in-range {
+  background-color: #C9A84C !important;
+  color: #0a0a0a !important;
+}
+.react-datepicker__day:hover {
+  background-color: #f9f5ed;
+}

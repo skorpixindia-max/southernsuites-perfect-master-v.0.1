@@ -1,0 +1,2 @@
+Place your favicon.png here in the public/ folder.
+The logo uploaded earlier (gold S crest on black) should be used as favicon.png
