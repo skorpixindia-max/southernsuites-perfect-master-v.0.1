@@ -58,7 +58,13 @@ async function getHotelLiveData(slug: string, checkIn: string, checkOut: string)
 }
 
 function mergeHotelData(hotel: Hotel, overrides: Record<string, unknown>, rates: Record<string, { price: number; original_price: number }>): Hotel {
-  const overrideRooms = (overrides.rooms as RoomType[] | undefined) || [];
+  let overrideRooms: RoomType[] = [];
+const rawOverrideRooms = overrides.rooms;
+if (Array.isArray(rawOverrideRooms)) {
+  overrideRooms = rawOverrideRooms;
+} else if (typeof rawOverrideRooms === 'string') {
+  try { overrideRooms = JSON.parse(rawOverrideRooms); } catch { overrideRooms = []; }
+}
 
   // Merge base rooms with override rooms by ID
   const mergedRooms = hotel.rooms.map((baseRoom: RoomType) => {
