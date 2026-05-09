@@ -12,17 +12,37 @@ export async function POST(req: NextRequest) {
     }
 
     // Validate file type
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif', 'image/heic', 'image/heif'];
-    if (!allowedTypes.includes(file.type)) {
-      return NextResponse.json({ error: `Invalid file type: ${file.type}. Use JPG, PNG or WebP.` }, { status: 400 });
-    }
-
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      return NextResponse.json({ error: `File too large: ${(file.size / 1024 / 1024).toFixed(1)}MB. Max 25MB.` }, { status: 400 });
-    }
-
     const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+
+const allowedExts = ['jpg', 'jpeg', 'png', 'webp', 'heic', 'heif'];
+
+const allowedTypes = [
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'image/webp',
+  'image/heic',
+  'image/heif',
+  '',
+];
+
+if (!allowedTypes.includes(file.type) && !allowedExts.includes(ext)) {
+  return NextResponse.json(
+    { error: `Invalid file type: ${file.type}` },
+    { status: 400 }
+  );
+}
+
+// Validate file size
+if (file.size > 25 * 1024 * 1024) {
+  return NextResponse.json(
+    {
+      error: `File too large: ${(file.size / 1024 / 1024).toFixed(1)}MB. Max 25MB.`,
+    },
+    { status: 400 }
+  );
+}
+
     const fileName = `${hotelSlug}/${Date.now()}-${Math.random().toString(36).slice(2, 7)}.${ext}`;
 
     const bytes = await file.arrayBuffer();
