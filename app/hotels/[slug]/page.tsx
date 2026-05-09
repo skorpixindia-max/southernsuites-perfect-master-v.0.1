@@ -48,10 +48,21 @@ async function getHotelLiveData(slug: string, checkIn: string, checkOut: string)
 }
 
 function mergeHotelData(hotel: Hotel, overrides: Record<string, unknown>, rates: Record<string, { price: number; original_price: number }>): Hotel {
-  const baseRooms: RoomType[] = (overrides.rooms as RoomType[] | undefined) || hotel.rooms;
-  const mergedRooms = baseRooms.map((r: RoomType) =>
-    rates[r.id] ? { ...r, price: rates[r.id].price, originalPrice: rates[r.id].original_price } : r
-  );
+  const overrideRooms = (overrides.rooms as RoomType[] | undefined) || [];
+  
+  
+  // Merge base rooms with override rooms (prices + images from admin)
+  const mergedRooms = hotel.rooms.map((baseRoom: RoomType) => {
+    const overrideRoom = overrideRooms.find((r) => r.id === baseRoom.id);
+    const rateData = rates[baseRoom.id];
+    return {
+      ...baseRoom,
+      ...(overrideRoom || {}),
+      images: overrideRoom?.images?.length ? overrideRoom.images : baseRoom.images,
+      price: rateData ? rateData.price : (overrideRoom?.price ?? baseRoom.price),
+      originalPrice: rateData ? rateData.original_price : (overrideRoom?.originalPrice ?? baseRoom.originalPrice),
+    };
+  });
   return {
     ...hotel,
     name: (overrides.name as string) || hotel.name,
@@ -91,7 +102,13 @@ export default async function HotelPage({ params, searchParams }: {
 
   const { overrides, rates, availability } = await getHotelLiveData(slug, checkIn, checkOut);
   const hotel = mergeHotelData(hotelBase!, overrides, rates);
-  const liveImages = overrides.images ?? [];
+  let liveImages: string[] = [];
+  const rawImages = overrides.images;
+  if (Array.isArray(rawImages)) {
+  liveImages = rawImages;
+   } else if (typeof rawImages === 'string') {
+  try { liveImages = JSON.parse(rawImages); } catch { liveImages = []; }
+}
 
   return (
     <div className="min-h-screen bg-white">
