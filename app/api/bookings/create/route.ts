@@ -22,6 +22,20 @@ export async function POST(req: NextRequest) {
   }
 
   const isDemo = body.razorpayPaymentId === 'DEMO_PAYMENT';
+
+  // ── Razorpay signature verification ─────────────────────────────
+  if (!isDemo && body.razorpayOrderId && body.razorpayPaymentId && body.razorpaySignature) {
+    const crypto = await import('crypto');
+    const expectedSignature = crypto
+      .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET!)
+      .update(`${body.razorpayOrderId}|${body.razorpayPaymentId}`)
+      .digest('hex');
+    if (expectedSignature !== body.razorpaySignature) {
+      console.error('❌ INVALID RAZORPAY SIGNATURE');
+      return NextResponse.json({ error: 'Payment verification failed' }, { status: 400 });
+    }
+    console.log('✅ Razorpay signature verified');
+  }
   const invoiceNumber = `SS${Date.now()}`; // ✅ No RPC call
 
   try {
