@@ -85,7 +85,7 @@ export async function POST(req: NextRequest) {
       .upsert(
         {
           hotel_slug: hotelSlug,
-          hotel_name: hotelSlug, // required field fallback
+          hotel_name: hotelSlug,
           images: newImages,
           updated_at: new Date().toISOString(),
         },
