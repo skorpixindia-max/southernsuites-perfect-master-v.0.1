@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
 
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      return NextResponse.json({ error: `File too large: ${(file.size / 1024 / 1024).toFixed(1)}MB. Max 5MB.` }, { status: 400 });
+      return NextResponse.json({ error: `File too large: ${(file.size / 1024 / 1024).toFixed(1)}MB. Max 25MB.` }, { status: 400 });
     }
 
     const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';

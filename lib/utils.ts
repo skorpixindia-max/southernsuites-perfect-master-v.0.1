@@ -18,8 +18,25 @@ export function calculateNights(checkIn: Date, checkOut: Date): number {
   return diff > 0 ? diff : 0;
 }
 
-export function calculateTaxes(amount: number): number {
-  return Math.round(amount * 0.12);
+export function calculateGSTSlab(price: number) {
+  if (price > 7500) {
+    return {
+      rate: 18,
+      cgst: 9,
+      sgst: 9,
+    };
+  }
+
+  return {
+    rate: 12,
+    cgst: 6,
+    sgst: 6,
+  };
+}
+
+export function calculateTaxes(subtotal: number, roomPrice: number): number {
+  const gst = calculateGSTSlab(roomPrice);
+  return subtotal * (gst.rate / 100);
 }
 
 export function formatCurrency(amount: number): string {
