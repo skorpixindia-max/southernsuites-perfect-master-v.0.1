@@ -22,16 +22,11 @@ export async function POST(req: NextRequest) {
   }
 
   const isDemo = body.razorpayPaymentId === 'DEMO_PAYMENT';
+  const invoiceNumber = `SS${Date.now()}`; // ✅ No RPC call
 
   try {
-    // Generate invoice number
-    let invoiceNumber = `SS${Date.now()}`;
-    try {
-      const { data: invData } = await supabaseAdmin.rpc('get_next_invoice_number');
-      if (invData) invoiceNumber = invData;
-    } catch { /* fallback */ }
-
-    const bookingData = {
+    // ✅ Only core columns that exist in every setup
+    const bookingData: Record<string, unknown> = {
       booking_id:          body.bookingId,
       hotel_id:            body.hotelId,
       hotel_name:          body.hotelName,
@@ -48,40 +43,30 @@ export async function POST(req: NextRequest) {
       room_price:          body.roomPrice,
       taxes:               body.taxes,
       total_amount:        body.totalAmount,
-      discount_amount:     body.discountAmount   || 0,
-      promo_code:          body.promoCode        || null,
-      payment_status:      isDemo ? 'pending'    : 'paid',
-      booking_status:      isDemo ? 'pending'    : 'confirmed',
+      payment_status:      isDemo ? 'pending' : 'paid',
+      booking_status:      isDemo ? 'pending' : 'confirmed',
       razorpay_order_id:   body.razorpayOrderId  || null,
       razorpay_payment_id: body.razorpayPaymentId || null,
       razorpay_signature:  body.razorpaySignature || null,
       special_requests:    body.specialRequests  || null,
-      invoice_number:      invoiceNumber,
-      gst_number:          (body.gstNumber as string) || '37CATPM1818B1ZN',
-      rooms_count:         1,
     };
 
-    // ── Step 1: Insert booking ──────────────────────────────────────
+    console.log('💾 Inserting booking:', body.bookingId);
+
     const { error: bookingError } = await supabaseAdmin
       .from('bookings')
       .insert([bookingData]);
 
     if (bookingError) {
-      console.error('BOOKING INSERT ERROR:', JSON.stringify(bookingError));
-      return NextResponse.json(
-        { error: bookingError.message || 'Database error' },
-        { status: 500 }
-      );
+      console.error('❌ INSERT ERROR:', JSON.stringify(bookingError));
+      return NextResponse.json({ error: bookingError.message }, { status: 500 });
     }
 
-    // ── Step 2: Insert one row per night into room_availability ─────
-    // Schema has: room_id, hotel_slug, date, rooms_booked, booking_id
-    // NOT check_in / check_out columns
+    console.log('✅ Booking saved:', body.bookingId);
+
+    // Room availability — non fatal
     if (body.checkIn && body.checkOut) {
-      const nightDates = getDatesBetween(
-        body.checkIn as string,
-        body.checkOut as string
-      );
+      const nightDates = getDatesBetween(body.checkIn as string, body.checkOut as string);
       if (nightDates.length > 0) {
         const availRows = nightDates.map((date) => ({
           hotel_slug:   body.hotelSlug,
@@ -90,17 +75,12 @@ export async function POST(req: NextRequest) {
           rooms_booked: 1,
           booking_id:   body.bookingId,
         }));
-        const { error: availError } = await supabaseAdmin
-          .from('room_availability')
-          .insert(availRows);
-        if (availError) {
-          // Non-fatal — booking already saved above
-          console.error('AVAIL INSERT ERROR:', JSON.stringify(availError));
-        }
+        await supabaseAdmin.from('room_availability').insert(availRows)
+          .then(({ error }) => { if (error) console.error('⚠️ AVAIL ERROR (non-fatal):', error.message); });
       }
     }
 
-    // ── Step 3: Send emails (non-blocking) ──────────────────────────
+    // Email — non fatal
     sendBookingConfirmationEmail({
       bookingId:    body.bookingId   as string,
       invoiceNumber,
@@ -108,8 +88,8 @@ export async function POST(req: NextRequest) {
       guestEmail:   body.guestEmail  as string,
       guestPhone:   body.guestPhone  as string,
       hotelName:    body.hotelName   as string,
-      hotelPhone:   (body.hotelPhone  as string) || '',
-      hotelEmail:   (body.hotelEmail  as string) || '',
+      hotelPhone:   (body.hotelPhone as string) || '',
+      hotelEmail:   (body.hotelEmail as string) || '',
       roomName:     body.roomName    as string,
       checkIn:      body.checkIn     as string,
       checkOut:     body.checkOut    as string,
@@ -118,17 +98,13 @@ export async function POST(req: NextRequest) {
       roomPrice:    body.roomPrice   as number,
       taxes:        body.taxes       as number,
       totalAmount:  body.totalAmount as number,
-      gstNumber:    (body.gstNumber  as string) || '37CATPM1818B1ZN',
-    }).catch((e) => console.error('EMAIL ERROR:', e));
+      gstNumber:    (body.gstNumber as string) || '37CATPM1818B1ZN',
+    }).catch((e) => console.error('📧 EMAIL ERROR (non-fatal):', e));
 
-    return NextResponse.json({
-      success:       true,
-      bookingId:     body.bookingId,
-      invoiceNumber,
-    });
+    return NextResponse.json({ success: true, bookingId: body.bookingId, invoiceNumber });
 
   } catch (err) {
-    console.error('BOOKING ROUTE CRASH:', err);
+    console.error('💥 ROUTE CRASH:', err);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }
