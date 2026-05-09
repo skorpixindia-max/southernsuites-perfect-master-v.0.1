@@ -3,6 +3,7 @@ import { Toaster } from 'react-hot-toast';
 import '../styles/globals.css';
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://southernsuites.com'),
   title: {
     default: 'Hotel Southern Suites — Hotels & Resorts | AP & Telangana',
     template: '%s | Hotel Southern Suites',
