@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { formatCurrency, formatDate, getWhatsAppMessage } from '@/lib/utils';
-import { CheckCircle, Download, Phone, MessageCircle } from 'lucide-react';
+import { CheckCircle, Download, MessageCircle } from 'lucide-react';
 
 export default function ConfirmationClient({ bookingId }: { bookingId: string }) {
   const [booking, setBooking] = useState<Record<string, unknown> | null>(null);
@@ -192,17 +192,21 @@ export default function ConfirmationClient({ bookingId }: { bookingId: string })
         <button onClick={downloadInvoice} className="btn-black flex items-center gap-2 text-xs py-3 px-5">
           <Download size={13} /> Download Invoice (PDF)
         </button>
+
         <a
           href={`https://wa.me/919618138686?text=${waMsg}`}
-          target="_blank" rel="noopener noreferrer"
+          target="_blank"
+          rel="noopener noreferrer"
           className="btn-gold flex items-center gap-2 text-xs py-3 px-5"
         >
           <MessageCircle size={13} /> Share on WhatsApp
         </a>
+
         <a href="/" className="btn-outline flex items-center gap-2 text-xs py-3 px-5">
           Back to Home
         </a>
-        
+
+        <a
           href={`mailto:bookings@southernsuites.com?subject=Cancellation Request — ${booking.booking_id}&body=Booking ID: ${booking.booking_id}%0AName: ${booking.guest_name}%0AProperty: ${booking.hotel_name}%0ACheck-in: ${booking.check_in}%0AReason: `}
           className="text-xs font-sans text-red-400 hover:text-red-600 transition-colors underline py-3"
         >
