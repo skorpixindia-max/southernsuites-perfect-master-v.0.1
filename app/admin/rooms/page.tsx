@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { HOTELS } from '@/lib/hotels-data';
 import { formatCurrency } from '@/lib/utils';
-import { Edit2, Check, X } from 'lucide-react';
+import { Edit2, Check, X, ChevronLeft, ChevronRight, Lock } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface RoomData {
@@ -18,14 +18,24 @@ export default function AdminRooms() {
   const [roomData, setRoomData] = useState<Record<string, RoomData>>({});
   const [inventory, setInventory] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
+  const [calendarRoom, setCalendarRoom] = useState<string | null>(null);
+  const [calendarMonth, setCalendarMonth] = useState(() => {
+    const now = new Date();
+    return { year: now.getFullYear(), month: now.getMonth() };
+  });
+  const [bookedDates, setBookedDates] = useState<Record<string, number>>({});
+  const [loadingCal, setLoadingCal] = useState(false);
 
   useEffect(() => {
-    // Load inventory from Supabase
     fetch('/api/admin/rooms/get-inventory')
       .then(r => r.json())
       .then(data => { if (data.inventory) setInventory(data.inventory); setLoading(false); })
       .catch(() => setLoading(false));
   }, []);
+
+  function update(roomId: string, field: keyof RoomData, value: number) {
+    setRoomData(prev => ({ ...prev, [roomId]: { ...prev[roomId], [field]: value } }));
+  }
 
   function startEdit(room: { id: string; name: string; price: number; originalPrice?: number }) {
     setEditingRoom(room.id);
@@ -45,14 +55,12 @@ export default function AdminRooms() {
     const data = roomData[roomId];
     if (!data) return;
 
-    // Save price
     const priceRes = await fetch('/api/admin/rooms/update', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ roomId, price: data.price, originalPrice: data.originalPrice }),
     });
 
-    // Save inventory
     const invRes = await fetch('/api/admin/rooms/update-inventory', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -68,8 +76,28 @@ export default function AdminRooms() {
     }
   }
 
-  function update(roomId: string, field: string, value: number) {
-    setRoomData(prev => ({ ...prev, [roomId]: { ...prev[roomId], [field]: value } }));
+  async function openCalendar(roomId: string, hotelSlug: string) {
+    if (calendarRoom === roomId) { setCalendarRoom(null); return; }
+    setCalendarRoom(roomId);
+    setLoadingCal(true);
+    try {
+      const res = await fetch(`/api/admin/rooms/get-inventory?roomId=${roomId}&hotelSlug=${hotelSlug}&calendar=true`);
+      const data = await res.json();
+      setBookedDates(data.bookedDates || {});
+    } catch { setBookedDates({}); }
+    finally { setLoadingCal(false); }
+  }
+
+  function getCalendarDays(year: number, month: number) {
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const days: (number | null)[] = Array(firstDay).fill(null);
+    for (let i = 1; i <= daysInMonth; i++) days.push(i);
+    return days;
+  }
+
+  function getDateStr(year: number, month: number, day: number) {
+    return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
   }
 
   if (loading) return <div className="p-8 text-center text-xs text-gray-400 font-sans">Loading...</div>;
@@ -97,6 +125,7 @@ export default function AdminRooms() {
                 const currentOriginal = data?.originalPrice ?? (room.originalPrice || room.price);
                 return (
                   <div key={room.id} className="px-5 py-4">
+                    {/* Room row */}
                     <div className="flex items-start justify-between flex-wrap gap-4">
                       <div className="flex-1">
                         <div className="text-sm font-serif text-brand-rich mb-1">{room.name}</div>
@@ -146,12 +175,89 @@ export default function AdminRooms() {
                           </div>
                         )}
                         {!isEditing && (
-                          <button onClick={() => startEdit(room)} className="btn-black text-[10px] px-3 py-2 flex items-center gap-1.5">
-                            <Edit2 size={11} /> Edit
-                          </button>
+                          <div className="flex gap-2">
+                            <button onClick={() => startEdit(room)} className="btn-black text-[10px] px-3 py-2 flex items-center gap-1.5">
+                              <Edit2 size={11} /> Edit
+                            </button>
+                            <button onClick={() => openCalendar(room.id, hotel.slug)} className="border border-gold text-gold text-[10px] px-3 py-2 flex items-center gap-1.5 hover:bg-gold hover:text-brand-black transition-colors">
+                              <Lock size={11} /> Availability
+                            </button>
+                          </div>
                         )}
                       </div>
                     </div>
+
+                    {/* Calendar — inside the room div, inside the map return */}
+                    {calendarRoom === room.id && (
+                      <div className="mt-4 border-t border-gold-border pt-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="text-xs font-serif text-brand-rich">
+                            {new Date(calendarMonth.year, calendarMonth.month).toLocaleString('en-IN', { month: 'long', year: 'numeric' })}
+                          </div>
+                          <div className="flex gap-1">
+                            <button onClick={() => setCalendarMonth(p => {
+                              const d = new Date(p.year, p.month - 1);
+                              return { year: d.getFullYear(), month: d.getMonth() };
+                            })} className="p-1 hover:bg-gold-tint"><ChevronLeft size={14} /></button>
+                            <button onClick={() => setCalendarMonth(p => {
+                              const d = new Date(p.year, p.month + 1);
+                              return { year: d.getFullYear(), month: d.getMonth() };
+                            })} className="p-1 hover:bg-gold-tint"><ChevronRight size={14} /></button>
+                          </div>
+                        </div>
+
+                        {loadingCal ? (
+                          <div className="text-xs text-gray-400 font-sans py-4 text-center">Loading calendar…</div>
+                        ) : (
+                          <>
+                            <div className="grid grid-cols-7 gap-0.5 mb-1">
+                              {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => (
+                                <div key={d} className="text-center text-[9px] text-gray-400 font-sans py-1">{d}</div>
+                              ))}
+                            </div>
+                            <div className="grid grid-cols-7 gap-0.5">
+                              {getCalendarDays(calendarMonth.year, calendarMonth.month).map((day, idx) => {
+                                if (!day) return <div key={idx} />;
+                                const dateStr = getDateStr(calendarMonth.year, calendarMonth.month, day);
+                                const booked = bookedDates[dateStr] || 0;
+                                const total = inventory[room.id] ?? 1;
+                                const available = Math.max(0, total - booked);
+                                const today = new Date().toISOString().split('T')[0];
+                                const isPast = dateStr < today;
+                                const isFullyBooked = available === 0 && total > 0;
+                                return (
+                                  <div key={idx} className={`text-center py-1.5 text-[10px] font-sans rounded-sm ${
+                                    isPast ? 'text-gray-300' :
+                                    isFullyBooked ? 'bg-red-50 text-red-500 font-semibold' :
+                                    booked > 0 ? 'bg-amber-50 text-amber-600' :
+                                    'bg-green-50 text-green-600'
+                                  }`}>
+                                    <div>{day}</div>
+                                    {!isPast && total > 0 && (
+                                      <div className="text-[8px] leading-none mt-0.5">
+                                        {available}/{total}
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                            <div className="flex gap-4 mt-3">
+                              {[
+                                { color: 'bg-green-50 text-green-600', label: 'Available' },
+                                { color: 'bg-amber-50 text-amber-600', label: 'Partial' },
+                                { color: 'bg-red-50 text-red-500', label: 'Fully Booked' },
+                              ].map(l => (
+                                <div key={l.label} className="flex items-center gap-1.5">
+                                  <div className={`w-3 h-3 rounded-sm ${l.color}`} />
+                                  <span className="text-[9px] text-gray-400 font-sans">{l.label}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    )}
                   </div>
                 );
               })}
