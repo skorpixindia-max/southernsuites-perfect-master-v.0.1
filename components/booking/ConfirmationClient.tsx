@@ -76,8 +76,14 @@ export default function ConfirmationClient({ bookingId }: { bookingId: string })
       startY: 120,
       head: [['Description', 'Rate', 'Nights', 'Amount']],
       body: [
-        [booking.room_name as string, formatCurrency(booking.room_price as number), booking.nights as string, formatCurrency((booking.room_price as number) * (booking.nights as number))],
-        ['GST (12%)', '', '', formatCurrency(booking.taxes as number)],
+        [
+          booking.room_name as string,
+          formatCurrency(booking.room_price as number),
+          `${booking.nights} × ${(booking.rooms_count as number) || 1} room`,
+          formatCurrency((booking.room_price as number) * (booking.nights as number) * ((booking.rooms_count as number) || 1))
+        ],
+        ...((booking.discount_amount as number) > 0 ? [[`Promo (${booking.promo_code})`, '', '', `−${formatCurrency(booking.discount_amount as number)}`]] : []),
+        ['GST', '', '', formatCurrency(booking.taxes as number)],
         ['', '', 'Total Paid', formatCurrency(booking.total_amount as number)],
       ],
       headStyles: { fillColor: [10, 10, 10], textColor: [201, 168, 76], fontSize: 9 },
@@ -163,8 +169,10 @@ export default function ConfirmationClient({ bookingId }: { bookingId: string })
             <div className="text-[9px] text-gold-dark uppercase tracking-widest mb-3">Payment Summary</div>
             {[
               ['Room Rate/night', formatCurrency(booking.room_price as number)],
-              [`Subtotal (${booking.nights} nights)`, formatCurrency((booking.room_price as number) * (booking.nights as number))],
-              ['GST (12%)', formatCurrency(booking.taxes as number)],
+              ['Rooms Booked', `${(booking.rooms_count as number) || 1} room(s)`],
+              [`Subtotal (${booking.nights} nights × ${(booking.rooms_count as number) || 1} room)`, formatCurrency((booking.room_price as number) * (booking.nights as number) * ((booking.rooms_count as number) || 1))],
+              ['GST', formatCurrency(booking.taxes as number)],
+              ...((booking.discount_amount as number) > 0 ? [[`Promo (${booking.promo_code})`, `−${formatCurrency(booking.discount_amount as number)}`]] : []),
             ].map(([k, v]) => (
               <div key={k} className="flex justify-between">
                 <span className="text-gray-500">{k}</span>
@@ -193,6 +201,12 @@ export default function ConfirmationClient({ bookingId }: { bookingId: string })
         </a>
         <a href="/" className="btn-outline flex items-center gap-2 text-xs py-3 px-5">
           Back to Home
+        </a>
+        
+          href={`mailto:bookings@southernsuites.com?subject=Cancellation Request — ${booking.booking_id}&body=Booking ID: ${booking.booking_id}%0AName: ${booking.guest_name}%0AProperty: ${booking.hotel_name}%0ACheck-in: ${booking.check_in}%0AReason: `}
+          className="text-xs font-sans text-red-400 hover:text-red-600 transition-colors underline py-3"
+        >
+          Request Cancellation
         </a>
       </div>
     </div>
