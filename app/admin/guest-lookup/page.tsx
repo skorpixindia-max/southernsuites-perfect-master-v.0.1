@@ -31,7 +31,7 @@ export default function AdminGuestLookup() {
     setLoading(true);
     setSearched(true);
     try {
-      const res = await fetch(`/api/admin/guests?q=${encodeURIComponent(query.trim())}`);
+      const res = await fetch(`/api/admin/guest-lookup?q=${encodeURIComponent(query.trim())}`);
       const data = await res.json();
       setResults(Array.isArray(data) ? data : []);
     } catch {
@@ -41,7 +41,6 @@ export default function AdminGuestLookup() {
     }
   }
 
-  // Group by guest email
   const guestGroups = results.reduce((acc, b) => {
     const email = b.guest_email as string;
     if (!acc[email]) acc[email] = [];
@@ -70,7 +69,6 @@ export default function AdminGuestLookup() {
         <p className="text-xs text-gray-500 font-sans mt-1">Search any guest across all 9 properties by name, email, phone, or booking ID</p>
       </div>
 
-      {/* Search bar */}
       <div className="bg-white border border-gold-border p-6 mb-6">
         <div className="flex gap-3">
           <div className="relative flex-1">
@@ -98,7 +96,6 @@ export default function AdminGuestLookup() {
         </div>
       </div>
 
-      {/* Results */}
       {loading && (
         <div className="bg-white border border-gold-border p-10 text-center text-sm text-gray-400 font-sans">Searching across all properties…</div>
       )}
@@ -118,7 +115,6 @@ export default function AdminGuestLookup() {
 
         return (
           <div key={email} className="bg-white border border-gold-border mb-4">
-            {/* Guest header */}
             <div className="bg-brand-black px-5 py-4 flex items-center justify-between flex-wrap gap-3">
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 bg-gold flex items-center justify-center flex-shrink-0">
@@ -148,7 +144,6 @@ export default function AdminGuestLookup() {
               </div>
             </div>
 
-            {/* Properties stayed */}
             <div className="px-5 py-2 border-b border-gold-border flex items-center gap-2 flex-wrap">
               <Building2 size={11} className="text-gray-400" />
               <span className="text-[10px] text-gray-400 font-sans">Stayed at:</span>
@@ -157,7 +152,6 @@ export default function AdminGuestLookup() {
               ))}
             </div>
 
-            {/* Booking list */}
             <div className="divide-y divide-gold-border">
               {guestBookings.map(b => (
                 <div key={b.id as string} className="px-5 py-3 flex items-center justify-between flex-wrap gap-3">

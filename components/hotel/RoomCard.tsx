@@ -6,17 +6,18 @@ import { formatCurrency, calculateTaxes } from '@/lib/utils';
 import { Users, BedDouble, Bath, Maximize2, Minus, Plus } from 'lucide-react';
 
 export default function RoomCard({
-  room, hotel, checkIn, checkOut, guests, availability,
+  room, hotel, checkIn, checkOut, guests, rooms = '1', availability,
 }: {
   room: RoomType;
   hotel: Hotel;
   checkIn: string;
   checkOut: string;
   guests: string;
+  rooms?: string;
   availability?: { total: number; booked: number; available: number };
 }) {
   const router = useRouter();
-  const [roomCount, setRoomCount] = useState(1);
+  const [roomCount, setRoomCount] = useState(Math.max(1, parseInt(rooms) || 1));
   const taxes = calculateTaxes(room.price, room.price);
   const roomImages: string[] = (room as RoomType & { images?: string[] }).images || [];
 const [currentImg, setCurrentImg] = useState(0);
