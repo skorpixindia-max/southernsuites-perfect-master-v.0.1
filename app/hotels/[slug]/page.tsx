@@ -111,7 +111,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function HotelPage({ params, searchParams }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ checkIn?: string; checkOut?: string; guests?: string }>;
+  searchParams: Promise<{ checkIn?: string; checkOut?: string; guests?: string; rooms?: string }>;
 }) {
   const { slug } = await params;
   const sp = await searchParams;
@@ -121,6 +121,7 @@ export default async function HotelPage({ params, searchParams }: {
   const checkIn = sp.checkIn || '';
   const checkOut = sp.checkOut || '';
   const guests = sp.guests || '2';
+  const rooms = sp.rooms || '1';
 
   const { overrides, rates, availability } = await getHotelLiveData(slug, checkIn, checkOut);
   const hotel = mergeHotelData(hotelBase!, overrides, rates);
@@ -201,7 +202,7 @@ export default async function HotelPage({ params, searchParams }: {
               </div>
               <div className="space-y-4">
                 {hotel.rooms.map((room) => (
-                  <RoomCard key={room.id} room={room} hotel={hotel} checkIn={checkIn} checkOut={checkOut} guests={guests} availability={availability[room.id]} />
+                  <RoomCard key={room.id} room={room} hotel={hotel} checkIn={checkIn} checkOut={checkOut} guests={guests} availability={availability[room.id] || { total: 0, booked: 0, available: 0 }} />
                 ))}
               </div>
             </div>
@@ -225,7 +226,7 @@ export default async function HotelPage({ params, searchParams }: {
             </div>
           </div>
           <div className="lg:col-span-1">
-            <HotelSidebar hotel={hotel} checkIn={checkIn} checkOut={checkOut} guests={guests} />
+            <HotelSidebar hotel={hotel} checkIn={checkIn} checkOut={checkOut} guests={guests} rooms={rooms} />
           </div>
         </div>
       </div>
