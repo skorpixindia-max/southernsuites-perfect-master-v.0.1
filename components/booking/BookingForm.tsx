@@ -47,7 +47,7 @@ export default function BookingForm({ hotel, room, checkIn, checkOut, guests, ro
   const subtotal = room.price * Math.max(nights, 0) * roomCount;
   const gstSlab = calculateGSTSlab(subtotal / Math.max(nights, 1) / roomCount);
   const taxes = calculateTaxes(subtotal, room.price);
-  const total = subtotal + taxes;
+  const total = Math.max(0, subtotal + taxes - discountAmount);
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
     const { name, value } = e.target;
     if (name === 'checkIn') {
