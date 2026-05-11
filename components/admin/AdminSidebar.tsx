@@ -10,7 +10,7 @@ const NAV = [
   { href: '/admin/dashboard',     icon: LayoutDashboard, label: 'Dashboard',       group: 'overview' },
   { href: '/admin/bookings',      icon: CalendarCheck,   label: 'All Bookings',    group: 'operations' },
   { href: '/admin/cancellations', icon: XCircle,         label: 'Cancellations',   group: 'operations' },
-  { href: '/admin/guests',        icon: Search,          label: 'Guest Lookup',    group: 'operations' },
+  { href: '/admin/guest-lookup',  icon: Search,          label: 'Guest Lookup',    group: 'operations' },
   { href: '/admin/hotels',        icon: Hotel,           label: 'Manage Hotels',   group: 'property' },
   { href: '/admin/rooms',         icon: BedDouble,       label: 'Rooms & Rates',   group: 'property' },
   { href: '/admin/reports',       icon: BarChart3,       label: 'Reports',         group: 'insights' },
