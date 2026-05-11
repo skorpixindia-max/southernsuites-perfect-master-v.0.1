@@ -3,7 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase';
 import { createHash } from 'crypto';
 
 function hashPassword(password: string): string {
-  return createHash('sha256').update(password + process.env.ADMIN_SECRET_KEY).digest('hex');
+  return createHash('sha256').update(password + (process.env.ADMIN_SECRET_KEY || 'secret')).digest('hex');
 }
 
 export async function POST(req: NextRequest) {
@@ -30,7 +30,8 @@ export async function POST(req: NextRequest) {
 
     if (data && data.password_hash === hashPassword(password)) {
       const response = NextResponse.json({ success: true, name: data.name, role: data.role });
-      response.cookies.set('admin_session', data.id, { httpOnly: true, maxAge: 86400 * 7 });
+      const sessionValue = JSON.stringify({ id: data.id, role: data.role, hotel_slug: data.hotel_slug });
+response.cookies.set('admin_session', sessionValue, { httpOnly: true, maxAge: 86400 * 7 });
       return response;
     }
   } catch {

@@ -131,7 +131,11 @@ export default function AdminBookings() {
         <select value={hotelFilter} onChange={e => setHotelFilter(e.target.value)}
           className="border border-gold-border px-3 py-2.5 text-sm font-sans outline-none focus:border-gold bg-white">
           <option value="all">All Hotels</option>
-          {hotels.map(h => <option key={h} value={h}>{h}</option>)}
+          {hotels.map(h => (
+  <option key={h} value={h}>
+    {(bookings.find(b => b.hotel_slug === h)?.hotel_name as string) || h}
+  </option>
+))}
         </select>
       </div>
 

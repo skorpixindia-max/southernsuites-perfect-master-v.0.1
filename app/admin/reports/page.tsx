@@ -36,7 +36,7 @@ export default function AdminReports() {
     return bookings.filter(b => new Date(b.created_at as string) >= cutoff);
   }, [bookings, range]);
 
-  const confirmed = filtered.filter(b => b.booking_status === 'confirmed' || b.payment_status === 'paid');
+  const confirmed = filtered.filter(b => b.payment_status === 'paid' && b.booking_status !== 'cancelled');
   const totalRevenue = confirmed.reduce((s, b) => s + ((b.total_amount as number) || 0), 0);
   const totalGuests  = confirmed.reduce((s, b) => s + ((b.guests as number) || 0), 0);
   const totalNights  = confirmed.reduce((s, b) => s + ((b.nights as number) || 0), 0);

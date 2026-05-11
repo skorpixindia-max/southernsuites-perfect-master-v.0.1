@@ -83,6 +83,8 @@ export default function AdminCancellations() {
       pending: 'bg-amber-50 text-amber-700',
       cancelled: 'bg-red-50 text-red-700',
       completed: 'bg-gray-100 text-gray-600',
+      refund_pending: 'bg-orange-50 text-orange-700',
+      refunded: 'bg-blue-50 text-blue-700',
     };
     return (
       <span className={`text-[9px] font-sans px-2 py-1 uppercase tracking-wide ${styles[s] || 'bg-gray-100 text-gray-500'}`}>
