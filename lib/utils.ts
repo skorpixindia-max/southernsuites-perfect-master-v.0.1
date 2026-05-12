@@ -19,19 +19,13 @@ export function calculateNights(checkIn: Date, checkOut: Date): number {
 }
 
 export function calculateGSTSlab(price: number) {
-  if (price > 7500) {
-    return {
-      rate: 18,
-      cgst: 9,
-      sgst: 9,
-    };
+  if (price <= 2500) {
+    return { rate: 0, cgst: 0, sgst: 0 };
   }
-
-  return {
-    rate: 12,
-    cgst: 6,
-    sgst: 6,
-  };
+  if (price > 7500) {
+    return { rate: 18, cgst: 9, sgst: 9 };
+  }
+  return { rate: 12, cgst: 6, sgst: 6 };
 }
 
 export function calculateTaxes(subtotal: number, roomPrice: number): number {
