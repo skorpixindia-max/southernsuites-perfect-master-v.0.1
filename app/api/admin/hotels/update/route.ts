@@ -3,7 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase';
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const { hotelSlug, name, description, phone, maps_link, amenities, highlights, rooms, images } = body;
+  const { hotelSlug, name, description, phone, maps_link, gst_number, email, amenities, highlights, rooms, images } = body;
 
   if (!hotelSlug) return NextResponse.json({ error: 'Missing hotelSlug' }, { status: 400 });
 

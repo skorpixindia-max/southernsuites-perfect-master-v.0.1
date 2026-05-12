@@ -11,6 +11,7 @@ interface RoomOverride {
 }
 interface HotelOverride {
   name?: string; phone?: string; description?: string; maps_link?: string;
+  gst_number?: string; email?: string;
   amenities?: string[]; highlights?: string[]; rooms?: RoomOverride[]; images?: string[];
 }
 
@@ -40,7 +41,8 @@ export default function AdminHotels() {
       name: ov.name ?? hotel.name,
       phone: ov.phone ?? hotel.phone,
       description: ov.description ?? hotel.description,
-      maps_link: ov.maps_link ?? hotel.mapsLink,
+      gst_number: ov.gst_number ?? hotel.gstNumber ?? '',
+      email: ov.email ?? hotel.email ?? '',
       amenities: ov.amenities ?? hotel.amenities,
       highlights: ov.highlights ?? hotel.highlights,
       images: ov.images ?? [],
@@ -245,7 +247,9 @@ export default function AdminHotels() {
                       {[
   { label: 'Hotel Name', field: 'name', value: data.name },
   { label: 'Phone', field: 'phone', value: data.phone },
-  { label: 'Google Maps Link', field: 'maps_link', value: data.maps_link, full: true },
+  { label: 'Email', field: 'email', value: (data as Record<string,unknown>).email as string || '' },
+  { label: 'GST Number (GSTIN)', field: 'gst_number', value: (data as Record<string,unknown>).gst_number as string || '' },
+  { label: 'Google Maps Link', field: 'maps_link', value: (data as Record<string,unknown>).maps_link as string || '', full: true },
   { label: 'Google Place ID', field: 'place_id', value: hotel.placeId, full: true, readonly: true },
 ].map(f => (
   <div key={f.field} className={f.full ? 'md:col-span-2' : ''}>

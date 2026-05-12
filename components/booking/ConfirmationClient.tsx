@@ -19,89 +19,144 @@ export default function ConfirmationClient({ bookingId }: { bookingId: string })
     const { jsPDF } = await import('jspdf');
     const autoTable = (await import('jspdf-autotable')).default;
     const doc = new jsPDF();
+    const gold: [number,number,number] = [201,168,76];
+    const black: [number,number,number] = [10,10,10];
+    const white: [number,number,number] = [255,255,255];
+    const lightGold: [number,number,number] = [248,243,229];
 
     // Header
-    doc.setFillColor(10, 10, 10);
-    doc.rect(0, 0, 210, 40, 'F');
-    doc.setTextColor(201, 168, 76);
-    doc.setFontSize(22);
+    doc.setFillColor(...black);
+    doc.rect(0, 0, 210, 45, 'F');
+    doc.setFillColor(...gold);
+    doc.rect(0, 0, 4, 45, 'F');
+    doc.setTextColor(...gold);
+    doc.setFontSize(20);
+    doc.setFont('helvetica', 'bold');
+    doc.text('SOUTHERN SUITES', 15, 20);
+    doc.setFontSize(8);
     doc.setFont('helvetica', 'normal');
-    doc.text('SOUTHERN SUITES', 105, 18, { align: 'center' });
-    doc.setFontSize(9);
-    doc.setTextColor(150, 130, 90);
-    doc.text('HOTELS & RESORTS  ·  BOOKING INVOICE', 105, 28, { align: 'center' });
-
-    // Booking ID badge
-    doc.setFillColor(201, 168, 76);
-    doc.rect(15, 48, 80, 12, 'F');
-    doc.setTextColor(10, 10, 10);
+    doc.setTextColor(180, 155, 100);
+    doc.text('HOTELS & RESORTS  ·  9 PROPERTIES ACROSS AP & TELANGANA', 15, 28);
+    doc.setTextColor(...gold);
     doc.setFontSize(10);
-    doc.text(`Booking ID: ${booking.booking_id}`, 55, 56.5, { align: 'center' });
+    doc.setFont('helvetica', 'bold');
+    doc.text('TAX INVOICE', 195, 15, { align: 'right' });
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(180, 155, 100);
+    doc.text(`Date: ${new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}`, 195, 22, { align: 'right' });
+    doc.text(`GSTIN: ${booking.gst_number || '37CATPM1818B1ZN'}`, 195, 29, { align: 'right' });
+    doc.text('SAC Code: 998551', 195, 36, { align: 'right' });
 
-    // Status
-    doc.setFillColor(240, 249, 240);
-    doc.rect(105, 48, 90, 12, 'F');
-    doc.setTextColor(20, 120, 20);
+    // Booking ID + Status strip
+    doc.setFillColor(...gold);
+    doc.rect(0, 45, 105, 14, 'F');
+    doc.setTextColor(...black);
     doc.setFontSize(9);
-    doc.text('✓ PAYMENT CONFIRMED', 150, 56.5, { align: 'center' });
+    doc.setFont('helvetica', 'bold');
+    doc.text(`Booking ID: ${booking.booking_id}`, 8, 54);
+    doc.setFillColor(34, 139, 34);
+    doc.rect(105, 45, 105, 14, 'F');
+    doc.setTextColor(...white);
+    doc.text('✓  PAYMENT CONFIRMED', 157, 54, { align: 'center' });
 
-    // Guest details
-    doc.setTextColor(26, 18, 9);
-    doc.setFontSize(11);
-    doc.text('Guest Details', 15, 75);
+    // Guest + Stay details
+    doc.setFillColor(...lightGold);
+    doc.rect(0, 59, 210, 55, 'F');
+    doc.setTextColor(...black);
     doc.setFontSize(9);
-    doc.setTextColor(100);
-    doc.text([
-      `Name: ${booking.guest_name}`,
-      `Email: ${booking.guest_email}`,
-      `Phone: ${booking.guest_phone}`,
-    ], 15, 83);
-
-    // Stay details
-    doc.setTextColor(26, 18, 9);
-    doc.setFontSize(11);
-    doc.text('Stay Details', 110, 75);
+    doc.setFont('helvetica', 'bold');
+    doc.text('GUEST DETAILS', 10, 68);
+    doc.setDrawColor(...gold);
+    doc.line(10, 70, 95, 70);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.5);
+    doc.setTextColor(50, 50, 50);
+    doc.text(`Name:    ${booking.guest_name}`, 10, 77);
+    doc.text(`Email:    ${booking.guest_email}`, 10, 84);
+    doc.text(`Phone:  ${booking.guest_phone}`, 10, 91);
+    doc.setFont('helvetica', 'bold');
     doc.setFontSize(9);
-    doc.setTextColor(100);
-    doc.text([
-      `Property: ${booking.hotel_name}`,
-      `Room: ${booking.room_name}`,
-      `Check-in: ${formatDate(booking.check_in as string)} · 12:00 PM`,
-      `Check-out: ${formatDate(booking.check_out as string)} · 11:00 AM`,
-      `Duration: ${booking.nights} Night(s)`,
-    ], 110, 83);
+    doc.setTextColor(...black);
+    doc.text('STAY DETAILS', 112, 68);
+    doc.line(112, 70, 200, 70);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.5);
+    doc.setTextColor(50, 50, 50);
+    doc.text(`Property:   ${booking.hotel_name}`, 112, 77);
+    doc.text(`Room:       ${booking.room_name}`, 112, 84);
+    doc.text(`Check-in:  ${formatDate(booking.check_in as string)} at 12:00 PM`, 112, 91);
+    doc.text(`Check-out: ${formatDate(booking.check_out as string)} at 11:00 AM`, 112, 98);
+    doc.text(`Duration:   ${booking.nights} Night(s)  ·  ${booking.guests} Guest(s)`, 112, 105);
 
-    // Invoice table
+    // Table
+    const roomsCount = (booking.rooms_count as number) || 1;
+    const subtotal = (booking.room_price as number) * (booking.nights as number) * roomsCount;
+    const discountAmt = (booking.discount_amount as number) || 0;
+    const tableBody: string[][] = [
+      [
+        `${booking.room_name}\n${roomsCount} room(s) × ${booking.nights} night(s)`,
+        formatCurrency(booking.room_price as number),
+        `${roomsCount} × ${booking.nights}`,
+        formatCurrency(subtotal),
+      ],
+    ];
+    if (discountAmt > 0) {
+      tableBody.push([`Promo Code: ${booking.promo_code}`, '', '', `−${formatCurrency(discountAmt)}`]);
+    }
+    tableBody.push(['GST (as applicable)', '', '', formatCurrency(booking.taxes as number)]);
+    tableBody.push(['', '', 'TOTAL PAID', formatCurrency(booking.total_amount as number)]);
+
     autoTable(doc, {
       startY: 120,
-      head: [['Description', 'Rate', 'Nights', 'Amount']],
-      body: [
-        [
-          booking.room_name as string,
-          formatCurrency(booking.room_price as number),
-          `${booking.nights} × ${(booking.rooms_count as number) || 1} room`,
-          formatCurrency((booking.room_price as number) * (booking.nights as number) * ((booking.rooms_count as number) || 1))
-        ],
-        ...((booking.discount_amount as number) > 0 ? [[`Promo (${booking.promo_code})`, '', '', `−${formatCurrency(booking.discount_amount as number)}`]] : []),
-        ['GST', '', '', formatCurrency(booking.taxes as number)],
-        ['', '', 'Total Paid', formatCurrency(booking.total_amount as number)],
-      ],
-      headStyles: { fillColor: [10, 10, 10], textColor: [201, 168, 76], fontSize: 9 },
-      bodyStyles: { fontSize: 9 },
-      columnStyles: { 0: { cellWidth: 80 }, 3: { halign: 'right' } },
-      styles: { lineColor: [232, 224, 204], lineWidth: 0.3 },
+      head: [['Description', 'Rate/Night', 'Qty', 'Amount']],
+      body: tableBody,
+      headStyles: { fillColor: black, textColor: gold, fontSize: 9, fontStyle: 'bold', cellPadding: 5 },
+      bodyStyles: { fontSize: 8.5, cellPadding: 4 },
+      columnStyles: {
+        0: { cellWidth: 90 },
+        1: { cellWidth: 35, halign: 'right' },
+        2: { cellWidth: 25, halign: 'center' },
+        3: { cellWidth: 40, halign: 'right', fontStyle: 'bold' },
+      },
+      styles: { lineColor: [232, 224, 204], lineWidth: 0.3, overflow: 'linebreak' },
+      alternateRowStyles: { fillColor: lightGold },
+      didParseCell: (data) => {
+        if (data.row.index === tableBody.length - 1) {
+          data.cell.styles.fillColor = black;
+          data.cell.styles.textColor = gold;
+          data.cell.styles.fontStyle = 'bold';
+          data.cell.styles.fontSize = 10;
+        }
+      },
     });
 
-    // Footer
-    const finalY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 15;
-    doc.setFillColor(10, 10, 10);
-    doc.rect(0, finalY, 210, 25, 'F');
-    doc.setTextColor(150, 130, 90);
-    doc.setFontSize(8);
-    doc.text('Hotel Southern Suites · Hotels & Resorts · southernsuites.com', 105, finalY + 10, { align: 'center' });
-    doc.text('9 Properties across Andhra Pradesh & Telangana', 105, finalY + 17, { align: 'center' });
+    // Terms
+    const finalY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 8;
+    doc.setFontSize(7.5);
+    doc.setTextColor(120, 120, 120);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Terms: Free cancellation available on most room types till check-in. Refunds processed within 5-7 business days.', 10, finalY);
+    doc.text('This is a computer-generated invoice and does not require a signature.', 10, finalY + 5);
 
-    doc.save(`Invoice-${booking.booking_id}.pdf`);
+    // Footer
+    const pageH = doc.internal.pageSize.height;
+    doc.setFillColor(...black);
+    doc.rect(0, pageH - 22, 210, 22, 'F');
+    doc.setFillColor(...gold);
+    doc.rect(0, pageH - 22, 4, 22, 'F');
+    doc.setTextColor(...gold);
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Hotel Southern Suites · Hotels & Resorts', 15, pageH - 13);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(180, 155, 100);
+    doc.setFontSize(7.5);
+    doc.text('southernsuites.com  ·  bookings@southernsuites.com  ·  +91 96181 38686', 15, pageH - 7);
+    doc.setTextColor(...gold);
+    doc.text('Thank you for choosing Southern Suites!', 195, pageH - 10, { align: 'right' });
+
+    doc.save(`SouthernSuites-Invoice-${booking.booking_id}.pdf`);
   }
 
   if (loading) {
