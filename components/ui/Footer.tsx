@@ -7,7 +7,7 @@ const CONTACT_NUMBERS = [
   { label: 'Nellore',      number: '08612372901' },
   { label: 'Kakinada',     number: '09515614666' },
   { label: 'Vijayawada',   number: '07993986633' },
-  { label: 'Hyderabad',    number: '+919618138686' },
+  { label: 'Hyderabad',    number: '09618138686' },
   { label: 'Vizag (Resort)', number: '09059228901' },
   { label: 'Vizag (Suites)', number: '08912948901' },
 ];
