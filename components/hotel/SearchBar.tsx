@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { HOTELS } from '@/lib/hotels-data';
+import DateRangePicker from '@/components/hotel/dateragepicker';
 
 export default function SearchBar() {
   const router = useRouter();
@@ -46,22 +47,15 @@ export default function SearchBar() {
           <div className="text-[10px] text-gray-400 mt-1 font-sans">Tirupati, Hyderabad…</div>
         </div>
 
-        {/* Check-in */}
-        <div className="p-4 border-b md:border-b-0 md:border-r border-gold-border text-left">
-          <div className="text-[9px] text-gold-dark uppercase tracking-widest font-sans mb-1">Check-in</div>
-          <input type="date" value={checkIn} min={today}
-            onChange={e => handleCheckIn(e.target.value)}
-            className="w-full text-sm text-brand-rich bg-transparent outline-none cursor-pointer font-sans" />
-          <div className="text-[10px] text-gray-400 mt-1 font-sans">From 12:00 PM</div>
-        </div>
-
-        {/* Check-out */}
-        <div className="p-4 border-b md:border-b-0 md:border-r border-gold-border text-left">
-          <div className="text-[9px] text-gold-dark uppercase tracking-widest font-sans mb-1">Check-out</div>
-          <input type="date" value={checkOut} min={checkIn ? (() => { const d = new Date(checkIn); d.setDate(d.getDate() + 1); return d.toISOString().split('T')[0]; })() : tomorrow}
-            onChange={e => setCheckOut(e.target.value)}
-            className="w-full text-sm text-brand-rich bg-transparent outline-none cursor-pointer font-sans" />
-          <div className="text-[10px] text-gray-400 mt-1 font-sans">Until 11:00 AM</div>
+        {/* Date Range Picker */}
+        <div className="md:col-span-2 border-b md:border-b-0 md:border-r border-gold-border">
+          <DateRangePicker
+            checkIn={checkIn}
+            checkOut={checkOut}
+            onCheckInChange={handleCheckIn}
+            onCheckOutChange={setCheckOut}
+            minDate={today}
+          />
         </div>
 
         {/* Guests */}
