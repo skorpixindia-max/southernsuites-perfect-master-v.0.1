@@ -43,6 +43,24 @@ export default function AdminSettings() {
     loadSettings();
   }, []);
 
+  useEffect(() => {
+    fetch('/api/admin/settings')
+      .then(r => r.json())
+      .then(data => {
+        setSettings(prev => ({
+          ...prev,
+          razorpay_key_id:     data.razorpay_key_id     || prev.razorpay_key_id,
+          razorpay_key_secret: data.razorpay_key_secret || prev.razorpay_key_secret,
+          whatsapp_number:     data.whatsapp_number     || prev.whatsapp_number,
+          email_from:          data.email_from          || prev.email_from,
+          hero_video:          data.hero_video          || prev.hero_video,
+          tagline:             data.tagline             || prev.tagline,
+          founded_year:        data.founded_year        || prev.founded_year,
+        }));
+      })
+      .catch(() => {});
+  }, []);
+  
   function handleChange(key: string, value: string) {
     setSettings({ ...settings, [key]: value });
   }
