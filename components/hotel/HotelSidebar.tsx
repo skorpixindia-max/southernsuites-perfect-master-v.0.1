@@ -55,30 +55,34 @@ export default function HotelSidebar({ hotel, checkIn, checkOut, guests, rooms }
 
         <div className="space-y-3 mb-5">
           <div>
-            <label className="text-[9px] text-gold-dark uppercase tracking-widest font-sans block mb-1">Check-in</label>
-            <input type="date" value={ci} min={today} className="input-field text-sm"
-              onChange={e => handleCheckIn(e.target.value)} />
-            <div className="text-[10px] text-gray-400 mt-1 font-sans">From 12:00 PM</div>
-          </div>
-          <div>
-            <label className="text-[9px] text-gold-dark uppercase tracking-widest font-sans block mb-1">Check-out</label>
-            <input type="date" value={co} min={getMinCheckout(ci)} className="input-field text-sm"
-              onChange={e => { setCo(e.target.value); handleChange(ci, e.target.value, g, r); }} />
-            <div className="text-[10px] text-gray-400 mt-1 font-sans">Until 11:00 AM</div>
+            <label className="text-[9px] text-gold-dark uppercase tracking-widest font-sans block mb-1.5">Dates</label>
+            <DateRangePicker
+              checkIn={ci}
+              checkOut={co}
+              onCheckInChange={handleCheckIn}
+              onCheckOutChange={(date) => { setCo(date); handleChange(ci, date, g, r); }}
+              minDate={today}
+            />
           </div>
           <div>
             <label className="text-[9px] text-gold-dark uppercase tracking-widest font-sans block mb-1">Guests</label>
-            <select value={g} className="input-field text-sm"
-              onChange={e => { setG(e.target.value); handleChange(ci, co, e.target.value, r); }}>
-              {[1,2,3,4,5,6].map(n => <option key={n} value={n}>{n} Guest{n > 1 ? 's' : ''}</option>)}
-            </select>
+            <div className="flex items-center border border-gold-border">
+              <button onClick={() => { const v = Math.max(1, parseInt(g) - 1).toString(); setG(v); handleChange(ci, co, v, r); }}
+                className="px-3 py-2 text-gold hover:bg-gold-tint font-sans text-sm">−</button>
+              <span className="flex-1 text-center text-sm font-sans text-brand-rich">{g} Guest{parseInt(g) > 1 ? 's' : ''}</span>
+              <button onClick={() => { const v = Math.min(6, parseInt(g) + 1).toString(); setG(v); handleChange(ci, co, v, r); }}
+                className="px-3 py-2 text-gold hover:bg-gold-tint font-sans text-sm">+</button>
+            </div>
           </div>
           <div>
             <label className="text-[9px] text-gold-dark uppercase tracking-widest font-sans block mb-1">Rooms</label>
-            <select value={r} className="input-field text-sm"
-              onChange={e => { setR(e.target.value); handleChange(ci, co, g, e.target.value); }}>
-              {[1,2,3,4,5].map(n => <option key={n} value={n}>{n} Room{n > 1 ? 's' : ''}</option>)}
-            </select>
+            <div className="flex items-center border border-gold-border">
+              <button onClick={() => { const v = Math.max(1, parseInt(r) - 1).toString(); setR(v); handleChange(ci, co, g, v); }}
+                className="px-3 py-2 text-gold hover:bg-gold-tint font-sans text-sm">−</button>
+              <span className="flex-1 text-center text-sm font-sans text-brand-rich">{r} Room{parseInt(r) > 1 ? 's' : ''}</span>
+              <button onClick={() => { const v = Math.min(5, parseInt(r) + 1).toString(); setR(v); handleChange(ci, co, g, v); }}
+                className="px-3 py-2 text-gold hover:bg-gold-tint font-sans text-sm">+</button>
+            </div>
           </div>
         </div>
 

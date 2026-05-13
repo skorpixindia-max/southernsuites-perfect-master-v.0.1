@@ -2,7 +2,6 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { HOTELS } from '@/lib/hotels-data';
-import DateRangePicker from '@/components/hotel/dateragepicker';
 
 export default function SearchBar() {
   const router = useRouter();
@@ -25,7 +24,11 @@ export default function SearchBar() {
   }
 
   function handleSearch() {
-    const co = checkOut && checkOut > checkIn ? checkOut : (checkIn ? (() => { const d = new Date(checkIn); d.setDate(d.getDate() + 1); return d.toISOString().split('T')[0]; })() : tomorrow);
+    const co = checkOut && checkOut > checkIn
+      ? checkOut
+      : checkIn
+        ? (() => { const d = new Date(checkIn); d.setDate(d.getDate() + 1); return d.toISOString().split('T')[0]; })()
+        : tomorrow;
     if (hotel) {
       router.push(`/hotels/${hotel}?checkIn=${checkIn || today}&checkOut=${co}&guests=${guests}&rooms=${rooms}`);
     } else {
@@ -35,7 +38,8 @@ export default function SearchBar() {
 
   return (
     <div className="bg-white border border-gold-border w-full max-w-4xl mx-auto">
-      <div className="grid grid-cols-1 md:grid-cols-5">
+      <div className="grid grid-cols-1 md:grid-cols-6">
+
         {/* Destination */}
         <div className="p-4 border-b md:border-b-0 md:border-r border-gold-border text-left">
           <div className="text-[9px] text-gold-dark uppercase tracking-widest font-sans mb-1">Destination</div>
@@ -47,35 +51,49 @@ export default function SearchBar() {
           <div className="text-[10px] text-gray-400 mt-1 font-sans">Tirupati, Hyderabad…</div>
         </div>
 
-        {/* Date Range Picker */}
-        <div className="md:col-span-2 border-b md:border-b-0 md:border-r border-gold-border">
-          <DateRangePicker
-            checkIn={checkIn}
-            checkOut={checkOut}
-            onCheckInChange={handleCheckIn}
-            onCheckOutChange={setCheckOut}
-            minDate={today}
-          />
+        {/* Check-in */}
+        <div className="p-4 border-b md:border-b-0 md:border-r border-gold-border text-left">
+          <div className="text-[9px] text-gold-dark uppercase tracking-widest font-sans mb-1">Check-in</div>
+          <input type="date" value={checkIn} min={today}
+            onChange={e => handleCheckIn(e.target.value)}
+            className="w-full text-sm text-brand-rich bg-transparent outline-none cursor-pointer font-sans" />
+          <div className="text-[10px] text-gray-400 mt-1 font-sans">From 12:00 PM</div>
+        </div>
+
+        {/* Check-out */}
+        <div className="p-4 border-b md:border-b-0 md:border-r border-gold-border text-left">
+          <div className="text-[9px] text-gold-dark uppercase tracking-widest font-sans mb-1">Check-out</div>
+          <input type="date" value={checkOut}
+            min={checkIn ? (() => { const d = new Date(checkIn); d.setDate(d.getDate() + 1); return d.toISOString().split('T')[0]; })() : tomorrow}
+            onChange={e => setCheckOut(e.target.value)}
+            className="w-full text-sm text-brand-rich bg-transparent outline-none cursor-pointer font-sans" />
+          <div className="text-[10px] text-gray-400 mt-1 font-sans">Until 11:00 AM</div>
         </div>
 
         {/* Guests */}
         <div className="p-4 border-b md:border-b-0 md:border-r border-gold-border text-left">
           <div className="text-[9px] text-gold-dark uppercase tracking-widest font-sans mb-1">Guests</div>
-          <select value={guests} onChange={e => setGuests(e.target.value)}
-            className="w-full text-sm text-brand-rich bg-transparent outline-none cursor-pointer font-sans">
-            {[1,2,3,4,5,6].map(n => <option key={n} value={n}>{n} Guest{n > 1 ? 's' : ''}</option>)}
-          </select>
-          <div className="text-[10px] text-gray-400 mt-1 font-sans">Select guests</div>
+          <div className="flex items-center gap-2">
+            <button onClick={() => setGuests(g => String(Math.max(1, parseInt(g) - 1)))}
+              className="text-gold font-sans text-base leading-none">−</button>
+            <span className="text-sm text-brand-rich font-sans flex-1 text-center">{guests}</span>
+            <button onClick={() => setGuests(g => String(Math.min(6, parseInt(g) + 1)))}
+              className="text-gold font-sans text-base leading-none">+</button>
+          </div>
+          <div className="text-[10px] text-gray-400 mt-1 font-sans">Guest{parseInt(guests) > 1 ? 's' : ''}</div>
         </div>
 
         {/* Rooms */}
         <div className="p-4 border-b md:border-b-0 md:border-r border-gold-border text-left">
           <div className="text-[9px] text-gold-dark uppercase tracking-widest font-sans mb-1">Rooms</div>
-          <select value={rooms} onChange={e => setRooms(e.target.value)}
-            className="w-full text-sm text-brand-rich bg-transparent outline-none cursor-pointer font-sans">
-            {[1,2,3,4,5].map(n => <option key={n} value={n}>{n} Room{n > 1 ? 's' : ''}</option>)}
-          </select>
-          <div className="text-[10px] text-gray-400 mt-1 font-sans">Select rooms</div>
+          <div className="flex items-center gap-2">
+            <button onClick={() => setRooms(r => String(Math.max(1, parseInt(r) - 1)))}
+              className="text-gold font-sans text-base leading-none">−</button>
+            <span className="text-sm text-brand-rich font-sans flex-1 text-center">{rooms}</span>
+            <button onClick={() => setRooms(r => String(Math.min(5, parseInt(r) + 1)))}
+              className="text-gold font-sans text-base leading-none">+</button>
+          </div>
+          <div className="text-[10px] text-gray-400 mt-1 font-sans">Room{parseInt(rooms) > 1 ? 's' : ''}</div>
         </div>
 
         {/* Search */}
