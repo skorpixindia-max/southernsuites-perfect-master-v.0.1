@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Phone, MapPin } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
+import DateRangePicker from '@/components/hotel/dateragepicker';
 
 export default function HotelSidebar({ hotel, checkIn, checkOut, guests, rooms }: {
   hotel: { name: string; phone: string; mapsLink: string; rooms: { price: number }[] };

@@ -35,7 +35,7 @@ export default function SearchBar() {
 
   return (
     <div className="bg-white border border-gold-border w-full max-w-4xl mx-auto">
-      <div className="grid grid-cols-1 md:grid-cols-6">
+      <div className="grid grid-cols-1 md:grid-cols-5">
         {/* Destination */}
         <div className="p-4 border-b md:border-b-0 md:border-r border-gold-border text-left">
           <div className="text-[9px] text-gold-dark uppercase tracking-widest font-sans mb-1">Destination</div>
