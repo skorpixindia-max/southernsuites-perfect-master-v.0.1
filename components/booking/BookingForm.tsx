@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import { Hotel, RoomType } from '@/lib/hotels-data';
 import { formatCurrency, calculateNights, calculateTaxes, calculateGSTSlab, generateBookingId } from '@/lib/utils';
 import { Shield, CheckCircle, Phone, Tag, X, Loader2 } from 'lucide-react';
+import DateRangePicker from '@/components/hotel/dateragepicker';
 
 declare global {
   interface Window { Razorpay: new (options: object) => { open: () => void }; }
@@ -49,17 +50,25 @@ export default function BookingForm({ hotel, room, checkIn, checkOut, guests, ro
   const taxes = calculateTaxes(subtotal, room.price);
   const total = Math.max(0, subtotal + taxes - discountAmount);
 
+  function handleCheckIn(date: string) {
+    const nextDay = new Date(date);
+    nextDay.setDate(nextDay.getDate() + 1);
+    const nextDayStr = nextDay.toISOString().split('T')[0];
+    setForm(prev => ({
+      ...prev,
+      checkIn: date,
+      checkOut: prev.checkOut <= date ? nextDayStr : prev.checkOut,
+    }));
+    if (appliedPromo) { setAppliedPromo(null); setDiscountAmount(0); }
+  }
+
+  function handleCheckOut(date: string) {
+    setForm(prev => ({ ...prev, checkOut: date }));
+    if (appliedPromo) { setAppliedPromo(null); setDiscountAmount(0); }
+  }
+
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
-    const { name, value } = e.target;
-    if (name === 'checkIn') {
-      const nextDay = new Date(value);
-      nextDay.setDate(nextDay.getDate() + 1);
-      const nextDayStr = nextDay.toISOString().split('T')[0];
-      setForm(prev => ({ ...prev, checkIn: value, checkOut: prev.checkOut <= value ? nextDayStr : prev.checkOut }));
-      if (appliedPromo) { setAppliedPromo(null); setDiscountAmount(0); }
-    } else {
-      setForm(prev => ({ ...prev, [name]: value }));
-    }
+    setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
   }
 
   const applyPromo = useCallback(async () => {
@@ -107,7 +116,6 @@ export default function BookingForm({ hotel, room, checkIn, checkOut, guests, ro
   async function handleBooking() {
     if (!validate()) return;
     setLoading(true);
-
     try {
       const avRes = await fetch('/api/bookings/check-availability', {
         method: 'POST',
@@ -152,7 +160,7 @@ export default function BookingForm({ hotel, room, checkIn, checkOut, guests, ro
         currency: 'INR',
         name: 'Hotel Southern Suites',
         description: `${hotel.shortName} — ${room.name}`,
-        image: '/logo.png',
+        image: '/favicon.png',
         order_id: orderData.orderId,
         prefill: { name: form.name, email: form.email, contact: form.phone },
         theme: { color: '#C9A84C' },
@@ -210,23 +218,29 @@ export default function BookingForm({ hotel, room, checkIn, checkOut, guests, ro
         {/* Stay Details */}
         <div className="bg-white border border-gold-border p-6">
           <div className="section-eyebrow mb-5">Stay Details</div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="text-[9px] text-gold-dark uppercase tracking-widest font-sans block mb-1.5">Check-in Date</label>
-              <input type="date" name="checkIn" value={form.checkIn} min={today} onChange={handleChange} className="input-field" />
-              <div className="text-[10px] text-gray-400 mt-1 font-sans">From 12:00 PM</div>
-            </div>
-            <div>
-              <label className="text-[9px] text-gold-dark uppercase tracking-widest font-sans block mb-1.5">Check-out Date</label>
-              <input type="date" name="checkOut" value={form.checkOut} min={form.checkIn || tomorrow} onChange={handleChange} className="input-field" />
-              <div className="text-[10px] text-gray-400 mt-1 font-sans">By 11:00 AM</div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="md:col-span-2">
+              <label className="text-[9px] text-gold-dark uppercase tracking-widest font-sans block mb-1.5">Select Dates</label>
+              <DateRangePicker
+                checkIn={form.checkIn}
+                checkOut={form.checkOut}
+                onCheckInChange={handleCheckIn}
+                onCheckOutChange={handleCheckOut}
+                minDate={today}
+              />
             </div>
             <div>
               <label className="text-[9px] text-gold-dark uppercase tracking-widest font-sans block mb-1.5">Guests</label>
               <select name="guests" value={form.guests} onChange={handleChange} className="input-field">
                 {[1,2,3,4,5,6].map(n => <option key={n} value={n}>{n} Guest{n > 1 ? 's' : ''}</option>)}
               </select>
-              {nights > 0 && <div className="text-[10px] text-gold-dark mt-1 font-sans">{nights} night{nights > 1 ? 's' : ''}</div>}
+            </div>
+            <div className="flex items-end">
+              {nights > 0 && (
+                <div className="text-xs font-sans text-gold-dark">
+                  {nights} night{nights > 1 ? 's' : ''} · {roomCount} room{roomCount > 1 ? 's' : ''}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -246,7 +260,7 @@ export default function BookingForm({ hotel, room, checkIn, checkOut, guests, ro
             <div className="md:col-span-2">
               <label className="text-[9px] text-gold-dark uppercase tracking-widest font-sans block mb-1.5">Phone Number *</label>
               <input name="phone" type="tel" value={form.phone} onChange={handleChange} placeholder="10-digit mobile number" className="input-field" autoComplete="tel" />
-              <div className="text-[10px] text-gray-400 mt-1 font-sans">Confirmation SMS will be sent to this number</div>
+              <div className="text-[10px] text-gray-400 mt-1 font-sans">Confirmation will be sent to this number</div>
             </div>
           </div>
           <div className="mt-4">
@@ -271,14 +285,9 @@ export default function BookingForm({ hotel, room, checkIn, checkOut, guests, ro
             </div>
           ) : (
             <div className="flex gap-2">
-              <input
-                value={promoInput}
-                onChange={e => setPromoInput(e.target.value.toUpperCase())}
+              <input value={promoInput} onChange={e => setPromoInput(e.target.value.toUpperCase())}
                 onKeyDown={e => e.key === 'Enter' && applyPromo()}
-                placeholder="Enter promo code"
-                className="input-field flex-1 uppercase tracking-widest text-xs"
-                maxLength={30}
-              />
+                placeholder="Enter promo code" className="input-field flex-1 uppercase tracking-widest text-xs" maxLength={30} />
               <button onClick={applyPromo} disabled={promoLoading || !promoInput.trim()}
                 className="btn-gold px-5 text-xs disabled:opacity-50 flex items-center gap-2">
                 {promoLoading ? <Loader2 size={12} className="animate-spin" /> : 'Apply'}
@@ -316,6 +325,9 @@ export default function BookingForm({ hotel, room, checkIn, checkOut, guests, ro
             <div className="text-gold font-serif text-sm mb-1">{hotel.name}</div>
             <div className="text-white/50 text-xs font-sans">{room.name}</div>
             <div className="text-white/30 text-[10px] font-sans mt-1">{room.size} · {room.beds}</div>
+            {roomCount > 1 && (
+              <div className="text-gold/60 text-[10px] font-sans mt-1">{roomCount} rooms selected</div>
+            )}
           </div>
           <div className="space-y-2.5 text-xs font-sans">
             {[
@@ -348,7 +360,7 @@ export default function BookingForm({ hotel, room, checkIn, checkOut, guests, ro
                 </div>
               </>
             ) : (
-              <div className="text-[9px] text-gray-400 font-sans">No GST applicable for this room rate</div>
+              <div className="text-[9px] text-gray-400 font-sans">No GST for rooms under ₹2,500/night</div>
             )}
             {discountAmount > 0 && (
               <div className="flex justify-between text-green-600">
@@ -360,9 +372,6 @@ export default function BookingForm({ hotel, room, checkIn, checkOut, guests, ro
               <span className="text-brand-rich">Total</span>
               <span className="text-brand-rich">{formatCurrency(total)}</span>
             </div>
-            {gstSlab.rate === 0 && (
-              <div className="text-[9px] text-gray-400 font-sans">No GST for rooms under ₹2,500/night</div>
-            )}
           </div>
         </div>
 
